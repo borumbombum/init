@@ -155,30 +155,24 @@ SESSION="OpencodeBot"
 WIN="main"
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-  warn "Session '$SESSION' already exists — skipping."
-  warn "To recreate: tmux kill-session -t $SESSION && bash bootstrap.sh"
+  warn "Session '$SESSION' already exists."
+  warn "To recreate: tmux kill-session -t $SESSION && re-run bootstrap."
 else
-  log "Creating tmux session '$SESSION'..."
+  log "Creating session '$SESSION'..."
 
-  # Create session — pane 0
   tmux new-session -d -s "$SESSION" -n "$WIN"
 
-  # Pane 0: telegram bot
   tmux send-keys -t "$SESSION:$WIN.0" "opencode-telegram-bot" Enter
 
-  # Pane 1: opencode serve
   tmux split-window -v -t "$SESSION:$WIN.0"
   tmux send-keys -t "$SESSION:$WIN.1" "opencode serve" Enter
 
-  # Pane 2: caffeinate (macOS only)
   if [[ "$OS" == "macos" ]]; then
     tmux split-window -v -t "$SESSION:$WIN.1"
     tmux send-keys -t "$SESSION:$WIN.2" "caffeinate -d -u -s" Enter
   fi
 
-  # Focus pane 0
   tmux select-pane -t "$SESSION:$WIN.0"
-
   log "Session '$SESSION' created ✓"
 fi
 
@@ -190,5 +184,5 @@ echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${GRN}  Bootstrap complete!${NC}"
 echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "  Run this to attach:  ${BLU}tmux attach -t $SESSION${NC}"
+echo -e "  ${BLU}tmux attach -t $SESSION${NC}"
 echo ""
