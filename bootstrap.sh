@@ -190,9 +190,5 @@ echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${GRN}  Bootstrap complete!${NC}"
 echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-
-if [[ -n "${TMUX:-}" ]]; then
-  tmux switch-client -t "$SESSION"
-else
-  tmux attach -t "$SESSION"
-fi
+echo -e "  Run this to attach:  ${BLU}tmux attach -t $SESSION${NC}"
+echo ""
