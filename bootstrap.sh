@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # bootstrap.sh — portable environment setup (macOS + Linux / WSL)
-# curl -fsSL https://raw.githubusercontent.com/YOU/dotfiles/main/bootstrap.sh | bash
+# curl -fsSL https://raw.githubusercontent.com/borumbombum/init/main/bootstrap.sh | bash
 # =============================================================================
 set -euo pipefail
 
@@ -129,14 +129,8 @@ fi
 # =============================================================================
 step "4 / 4 — caffeinate"
 
-CAFFEINATE_CMD=""
 if [[ "$OS" == "macos" ]]; then
-  if command -v caffeinate &>/dev/null; then
-    log "caffeinate available ✓"
-    CAFFEINATE_CMD="caffeinate -i"
-  else
-    warn "caffeinate not found — skipping."
-  fi
+  command -v caffeinate &>/dev/null && log "caffeinate available ✓" || warn "caffeinate not found."
 else
   log "Linux — caffeinate not applicable, skipping."
 fi
@@ -147,7 +141,6 @@ fi
 step "5 / 5 — tmux session"
 
 SESSION="OpencodeBot"
-WIN_BOT="opencode-bot"
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   warn "Session '$SESSION' already exists — skipping."
@@ -155,14 +148,22 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 else
   log "Creating tmux session '$SESSION'..."
 
-  tmux new-session -d -s "$SESSION" -n "$WIN_BOT"
-  tmux send-keys -t "$SESSION:$WIN_BOT" "npx @grinev/opencode-telegram-bot" Enter
+  # Window 1: telegram bot
+  tmux new-session -d -s "$SESSION" -n "telegram-bot"
+  tmux send-keys -t "$SESSION:telegram-bot" "npx @grinev/opencode-telegram-bot" Enter
 
-  # Caffeinate in a small split below (macOS only)
-  if [[ -n "$CAFFEINATE_CMD" ]]; then
-    tmux split-window -t "$SESSION:$WIN_BOT" -v -l 3 "$CAFFEINATE_CMD"
-    tmux select-pane -t "$SESSION:$WIN_BOT.0"
+  # Window 2: opencode serve
+  tmux new-window -t "$SESSION" -n "opencode"
+  tmux send-keys -t "$SESSION:opencode" "opencode serve" Enter
+
+  # Window 3: caffeinate (macOS only)
+  if [[ "$OS" == "macos" ]]; then
+    tmux new-window -t "$SESSION" -n "caffeinate"
+    tmux send-keys -t "$SESSION:caffeinate" "caffeinate -d -u -s" Enter
   fi
+
+  # Focus first window
+  tmux select-window -t "$SESSION:telegram-bot"
 
   log "Session '$SESSION' created ✓"
 fi
