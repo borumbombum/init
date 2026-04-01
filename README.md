@@ -27,6 +27,7 @@ tmux attach -t OpencodeBot
 To simulate a fresh Linux machine locally:
 
 ```bash
+git clone https://github.com/borumbombum/init.git && cd init
 docker build -t init .
 docker run -it init
 ```
