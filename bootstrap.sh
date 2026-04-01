@@ -114,7 +114,7 @@ command -v npm &>/dev/null || err "npm not found after Node install — somethin
 # 3. OPENCODE TELEGRAM BOT
 step "3 / 5 — opencode-telegram-bot"
 
-if command -v opencode-telegram-bot &>/dev/null; then
+if command -v opencode-telegram &>/dev/null; then
   log "opencode-telegram-bot already installed ✓"
 else
   log "Installing opencode-telegram-bot globally..."
@@ -162,7 +162,7 @@ else
 
   tmux new-session -d -s "$SESSION" -n "$WIN"
 
-  tmux send-keys -t "$SESSION:$WIN.0" "opencode-telegram-bot" Enter
+  tmux send-keys -t "$SESSION:$WIN.0" "opencode-telegram start" Enter
 
   tmux split-window -v -t "$SESSION:$WIN.0"
   tmux send-keys -t "$SESSION:$WIN.1" "opencode serve" Enter
