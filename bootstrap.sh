@@ -141,6 +141,7 @@ fi
 step "5 / 5 — tmux session"
 
 SESSION="OpencodeBot"
+WIN="main"
 
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   warn "Session '$SESSION' already exists — skipping."
@@ -148,22 +149,24 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 else
   log "Creating tmux session '$SESSION'..."
 
-  # Window 1: telegram bot
-  tmux new-session -d -s "$SESSION" -n "telegram-bot"
-  tmux send-keys -t "$SESSION:telegram-bot" "npx @grinev/opencode-telegram-bot" Enter
+  # Create session with one window
+  tmux new-session -d -s "$SESSION" -n "$WIN"
 
-  # Window 2: opencode serve
-  tmux new-window -t "$SESSION" -n "opencode"
-  tmux send-keys -t "$SESSION:opencode" "opencode serve" Enter
+  # Pane 1 (top): telegram bot
+  tmux send-keys -t "$SESSION:$WIN" "npx --yes @grinev/opencode-telegram-bot" Enter
 
-  # Window 3: caffeinate (macOS only)
+  # Pane 2 (middle): opencode serve
+  tmux split-window -t "$SESSION:$WIN" -v
+  tmux send-keys -t "$SESSION:$WIN" "opencode serve" Enter
+
+  # Pane 3 (bottom): caffeinate (macOS only)
   if [[ "$OS" == "macos" ]]; then
-    tmux new-window -t "$SESSION" -n "caffeinate"
-    tmux send-keys -t "$SESSION:caffeinate" "caffeinate -d -u -s" Enter
+    tmux split-window -t "$SESSION:$WIN" -v
+    tmux send-keys -t "$SESSION:$WIN" "caffeinate -d -u -s" Enter
   fi
 
-  # Focus first window
-  tmux select-window -t "$SESSION:telegram-bot"
+  # Focus top pane
+  tmux select-pane -t "$SESSION:$WIN.0"
 
   log "Session '$SESSION' created ✓"
 fi
