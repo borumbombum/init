@@ -111,10 +111,21 @@ fi
 
 command -v npm &>/dev/null || err "npm not found after Node install — something went wrong."
 
+# 3. OPENCODE TELEGRAM BOT
+step "3 / 5 — opencode-telegram-bot"
+
+if command -v opencode-telegram-bot &>/dev/null; then
+  log "opencode-telegram-bot already installed ✓"
+else
+  log "Installing opencode-telegram-bot globally..."
+  npm install -g @grinev/opencode-telegram-bot
+  log "opencode-telegram-bot installed ✓"
+fi
+
 # =============================================================================
-# 3. OPENCODE
+# 4. OPENCODE
 # =============================================================================
-step "3 / 4 — opencode"
+step "4 / 5 — opencode"
 
 if command -v opencode &>/dev/null; then
   log "opencode already installed ✓"
@@ -149,23 +160,23 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 else
   log "Creating tmux session '$SESSION'..."
 
-  # Create session with one window
+  # Create session — pane 0
   tmux new-session -d -s "$SESSION" -n "$WIN"
 
-  # Pane 1 (top): telegram bot
-  tmux send-keys -t "$SESSION:$WIN" "npx --yes @grinev/opencode-telegram-bot" Enter
+  # Pane 0: telegram bot
+  tmux send-keys -t "$SESSION:$WIN.0" "opencode-telegram-bot" Enter
 
-  # Pane 2 (middle): opencode serve
-  tmux split-window -t "$SESSION:$WIN" -v
-  tmux send-keys -t "$SESSION:$WIN" "opencode serve" Enter
+  # Pane 1: opencode serve
+  tmux split-window -v -t "$SESSION:$WIN.0"
+  tmux send-keys -t "$SESSION:$WIN.1" "opencode serve" Enter
 
-  # Pane 3 (bottom): caffeinate (macOS only)
+  # Pane 2: caffeinate (macOS only)
   if [[ "$OS" == "macos" ]]; then
-    tmux split-window -t "$SESSION:$WIN" -v
-    tmux send-keys -t "$SESSION:$WIN" "caffeinate -d -u -s" Enter
+    tmux split-window -v -t "$SESSION:$WIN.1"
+    tmux send-keys -t "$SESSION:$WIN.2" "caffeinate -d -u -s" Enter
   fi
 
-  # Focus top pane
+  # Focus pane 0
   tmux select-pane -t "$SESSION:$WIN.0"
 
   log "Session '$SESSION' created ✓"
