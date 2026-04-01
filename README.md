@@ -11,38 +11,14 @@ Minimal environment bootstrap for a machine-agnostic developer. One curl command
 5. Creates a tmux session called `OpencodeBot` with three panes: telegram bot, opencode serve, and caffeinate
 
 ## Usage
-
 ```bash
 curl -fsSL https://raw.githubusercontent.com/borumbombum/init/main/bootstrap.sh | bash
 ```
 
 Then attach to your session:
-
 ```bash
 tmux attach -t OpencodeBot
 ```
-
-## Test in Docker
-
-To simulate a fresh Linux machine locally:
-
-```bash
-git clone https://github.com/borumbombum/init.git && cd init
-docker build -t init .
-docker run -it init
-```
-
-## Compatibility
-
-| OS | Supported |
-|---|---|
-| macOS | ✓ |
-| Arch Linux | ✓ |
-| Debian / Ubuntu | ✓ |
-| Fedora | ✓ |
-| Alpine | ✓ |
-| WSL | ✓ |
-| Windows | ✗ |
 
 ## Philosophy
 
