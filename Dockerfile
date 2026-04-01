@@ -4,8 +4,7 @@ RUN apt-get update && apt-get install -y \
   curl \
   bash \
   sudo \
-  ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+  ca-certificates
 
 RUN useradd -m -s /bin/bash user && \
   echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
