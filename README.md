@@ -8,18 +8,27 @@ Minimal environment bootstrap for a machine-agnostic developer. One curl command
 2. Installs **Node.js** via nvm if not present
 3. Installs **opencode**
 4. Installs **caffeinate** (macOS only)
-5. Creates a tmux session called `OpencodeBot` with the telegram bot running inside it
+5. Creates a tmux session called `OpencodeBot` with three panes: telegram bot, opencode serve, and caffeinate
 
 ## Usage
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/borumbumbum/init/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/borumbombum/init/main/bootstrap.sh | bash
 ```
 
 Then attach to your session:
 
 ```bash
 tmux attach -t OpencodeBot
+```
+
+## Test in Docker
+
+To simulate a fresh Linux machine locally:
+
+```bash
+docker build -t init .
+docker run -it init
 ```
 
 ## Compatibility
