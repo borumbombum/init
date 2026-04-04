@@ -20,6 +20,27 @@ Then attach to your session:
 tmux attach -t OpencodeBot
 ```
 
+## Backup
+
+Secure encrypted backups of any directory using `backup.sh`.
+
+### Download
+```bash
+curl -fsSL https://raw.githubusercontent.com/borumbombum/init/main/backup.sh -o backup.sh && chmod +x backup.sh
+```
+
+### Usage
+```bash
+./backup.sh <Source_Path> <Destination_Parent_Directory>
+```
+
+Example:
+```bash
+./backup.sh /Volumes/Pendrive/Data /home/user/Backups
+```
+
+The script syncs files from the source, compresses them into a tarball, encrypts it with AES-256-CBC, and automatically cleans up temporary files.
+
 ## Philosophy
 
 You don't need your machine. You just need your curl command.
