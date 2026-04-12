@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# bootstrap.sh — portable environment setup (macOS + Linux / WSL)
+# bootstrap.sh — omarchy (Arch Linux) + Debian/Ubuntu environment setup
 # curl -fsSL https://raw.githubusercontent.com/borumbombum/init/main/bootstrap.sh | bash
 # =============================================================================
 set -euo pipefail
@@ -15,15 +15,12 @@ step() { echo -e "\n${BLU}── $1${NC}"; }
 # ── OS Detection ──────────────────────────────────────────────────────────────
 detect_os() {
   case "$OSTYPE" in
-    darwin*) echo "macos" ;;
     linux*)
       if   [[ -f /etc/arch-release ]];   then echo "arch"
       elif [[ -f /etc/debian_version ]]; then echo "debian"
-      elif [[ -f /etc/fedora-release ]]; then echo "fedora"
-      elif [[ -f /etc/alpine-release ]]; then echo "alpine"
-      else                                    echo "linux"
+      else                                    err "Unsupported Linux distro. This script supports omarchy (Arch) and Debian/Ubuntu only."
       fi ;;
-    *) err "Unsupported OS: $OSTYPE — this script supports macOS and Linux only." ;;
+    *) err "Unsupported OS: $OSTYPE — this script supports omarchy (Arch) and Debian/Ubuntu only." ;;
   esac
 }
 
@@ -31,55 +28,55 @@ install_pkg() {
   local pkg="$1"
   log "Installing: $pkg"
   case "$OS" in
-    macos)  brew install "$pkg" ;;
     arch)   sudo pacman -S --noconfirm --needed "$pkg" ;;
     debian) sudo apt-get install -y "$pkg" ;;
-    fedora) sudo dnf install -y "$pkg" ;;
-    alpine) sudo apk add --no-cache "$pkg" ;;
-    linux)  err "Unknown Linux distro — install '$pkg' manually and re-run." ;;
+    *)      err "Cannot install '$pkg' — unsupported OS: $OS" ;;
   esac
 }
 
-install_config() {
-  local repo_path="$1"
-  local target_dir="$2"
-  local raw_url="https://raw.githubusercontent.com/borumbombum/init/main"
+declare -A CONFIG_DESTINATIONS=(
+  ["nvim-config"]="$HOME/.config/nvim/lua/config"
+  ["omarchy-themes"]="$HOME/.config/omarchy/themes"
+)
 
-  mkdir -p "$target_dir"
+clone_configs() {
+  CLONE_DIR=$(mktemp -d)
+  
+  log "Cloning configs..."
+  if ! git clone --depth 1 https://github.com/borumbombum/init.git "$CLONE_DIR" 2>/dev/null; then
+    err "Failed to clone configs repo"
+  fi
 
-  for file in autocmds options lazy keymaps; do
-    local src="${raw_url}/${repo_path}/${file}.lua"
-    local dest="${target_dir}/${file}.lua"
-    if curl -fsSL "$src" -o "$dest" 2>/dev/null; then
-      log "Installed ${file}.lua"
-    else
-      warn "Failed to install ${file}.lua"
+  local config_src="$CLONE_DIR/configs"
+
+  for folder in "$config_src"/*; do
+    [[ -e "$folder" ]] || continue
+    local folder_name
+    folder_name=$(basename "$folder")
+    local dest="${CONFIG_DESTINATIONS[$folder_name]}"
+    
+    if [[ -z "$dest" ]]; then
+      warn "No destination defined for $folder_name — skipping"
+      continue
     fi
+    
+    if [[ -e "$dest" ]]; then
+      warn "$dest already exists."
+      read -p "Overwrite? [y/N] " -n 1 -r reply; echo
+      if [[ ! $reply =~ ^[Yy]$ ]]; then
+        log "Skipped $folder_name"
+        continue
+      fi
+    fi
+    
+    mkdir -p "$dest"
+    cp -r "$folder"/* "$dest/"
+    log "Copied $folder_name -> $dest"
   done
-}
-
-has_atuin() {
-  command -v atuin &>/dev/null && return 0
-  [[ -x "$HOME/.local/bin/atuin" ]] && return 0
-  [[ -x "$HOME/.cargo/bin/atuin" ]] && return 0
-  [[ -x "/usr/local/bin/atuin" ]] && return 0
-  [[ -x "/usr/bin/atuin" ]] && return 0
-  return 1
 }
 
 OS=$(detect_os)
 log "Detected OS: $OS"
-
-# =============================================================================
-# HOMEBREW  (macOS only — gate for all brew installs)
-# =============================================================================
-if [[ "$OS" == "macos" ]] && ! command -v brew &>/dev/null; then
-  step "Homebrew"
-  log "Installing Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  # Add brew to PATH for Apple Silicon
-  [[ -f /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
 
 # =============================================================================
 # 1. TMUX
@@ -90,35 +87,6 @@ if command -v tmux &>/dev/null; then
   log "tmux already installed ($(tmux -V))"
 else
   install_pkg tmux
-fi
-
-# Config path: XDG for tmux >= 3.1, legacy ~/.tmux.conf for older
-TMUX_MAJOR=$(tmux -V | grep -oE '[0-9]+' | head -1)
-if [[ "$TMUX_MAJOR" -ge 3 ]]; then
-  TMUX_CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
-  TMUX_CONF="$TMUX_CONF_DIR/tmux.conf"
-  mkdir -p "$TMUX_CONF_DIR"
-else
-  TMUX_CONF="$HOME/.tmux.conf"
-fi
-
-if [[ -f "$TMUX_CONF" ]]; then
-  log "tmux config already exists, skipping"
-else
-  log "Writing tmux config -> $TMUX_CONF"
-  cat > "$TMUX_CONF" << TMUXEOF
-unbind r
-bind r source-file $TMUX_CONF
-set -g mouse on
-set -g default-terminal "tmux-256color"
-set -as terminal-overrides ",xterm-256color:Tc"
-set -g window-style 'bg=colour232'
-set -g window-active-style 'bg=colour232'
-set -g pane-border-style fg=white,bg=black
-set -g pane-active-border-style fg=green,bg=black
-set -g status-style bg=green,fg=black
-TMUXEOF
-  log "tmux config written ✓"
 fi
 
 # =============================================================================
@@ -166,89 +134,47 @@ else
 fi
 
 # =============================================================================
-# 5. ATUIN
+# 5. FZF
 # =============================================================================
-step "5 / 8 — atuin"
+step "5 / 8 — fzf"
 
-if has_atuin; then
-  log "atuin already installed ✓"
+if command -v fzf &>/dev/null; then
+  log "fzf already installed ✓"
 else
-  log "Installing atuin..."
-  curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
-  log "atuin installed ✓"
+  install_pkg fzf
 fi
 
 # =============================================================================
-# 6. ZDOTDIR / .zshrc SETUP
+# 6. CUSTOM CONFIGS
 # =============================================================================
-step "6 / 8 — zsh environment"
+step "6 / 8 — Custom Configs"
 
-if grep -q "# >>> bootstrap.sh >>>" "$HOME/.zshrc" 2>/dev/null; then
+clone_configs
+
+# =============================================================================
+# 7. ZDOTDIR / .zshrc SETUP
+# =============================================================================
+step "7 / 8 — zsh environment"
+
+if [[ "$SHELL" != */zsh ]]; then
+  warn "zsh not detected — skipping zsh configuration"
+elif grep -q 'source.*\.zshrc.d/custom.sh' "$HOME/.zshrc" 2>/dev/null; then
   log "zsh environment already configured ✓"
 else
-  log "Writing portable .zshrc additions to ~/.zshrc"
-  cat >> "$HOME/.zshrc" << 'ZSHREOF'
+  log "Setting up zsh environment..."
+  mkdir -p "$HOME/.zshrc.d"
+  
+  cp "$CLONE_DIR/configs/zsh/custom.sh" "$HOME/.zshrc.d/custom.sh"
+  
+  echo '' >> "$HOME/.zshrc"
+  echo '# bootstrap.sh customizations' >> "$HOME/.zshrc"
+  echo '[[ -f ~/.zshrc.d/custom.sh ]] && source ~/.zshrc.d/custom.sh' >> "$HOME/.zshrc"
 
-# >>> bootstrap.sh >>>
-export LANG=en_US.UTF-8
-export LANGUAGE=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
-alias ls='ls -ealth'
-alias ll='/bin/ls -lth'
-alias lse='/bin/ls -lht | sort -rs -t. -k2'
-
-HISTFILE=$HOME/.zhistory
-SAVEHIST=1000
-HISTSIZE=999
-setopt share_history
-setopt hist_expire_dups_first
-setopt hist_ignore_dups
-setopt hist_verify
-
-bindkey '^[[A' history-search-backward
-bindkey '^[[B' history-search-forward
-
-if [[ -f ~/.p10k.zsh ]]; then
-  source ~/.p10k.zsh
-fi
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-if [[ -d "$HOME/.rvm" ]]; then
-  export PATH="$PATH:$HOME/.rvm/bin"
-fi
-
-if [[ -d "$HOME/.bun" ]]; then
-  export BUN_INSTALL="$HOME/.bun"
-  export PATH="$BUN_INSTALL/bin:$PATH"
-  [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-fi
-
-if [[ -f "$HOME/.atuin/bin/env" ]]; then
-  . "$HOME/.atuin/bin/env"
-  eval "$(atuin init zsh)"
-fi
-# <<< bootstrap.sh <<<
-ZSHREOF
-  log "zsh environment written ✓"
+  log "zsh environment set up ✓"
 fi
 
 # =============================================================================
-# 7. CAFFEINATE  (macOS built-in — skip on Linux)
-# =============================================================================
-step "7 / 8 — caffeinate"
-
-if [[ "$OS" == "macos" ]]; then
-  command -v caffeinate &>/dev/null && log "caffeinate available ✓" || warn "caffeinate not found."
-else
-  log "Linux — caffeinate not applicable, skipping."
-fi
-
-# =============================================================================
-# 5. TMUX SESSION
+# 8. TMUX SESSION
 # =============================================================================
 step "8 / 8 — tmux session"
 
@@ -268,27 +194,11 @@ else
   tmux split-window -v -t "$SESSION:$WIN.0"
   tmux send-keys -t "$SESSION:$WIN.1" "opencode serve" Enter
 
-  if [[ "$OS" == "macos" ]]; then
-    tmux split-window -v -t "$SESSION:$WIN.1"
-    tmux send-keys -t "$SESSION:$WIN.2" "caffeinate -d -u -s" Enter
-  fi
-
   tmux select-pane -t "$SESSION:$WIN.0"
   log "Session '$SESSION' created ✓"
 fi
 
-# =============================================================================
-# 9. CUSTOM CONFIGS
-# =============================================================================
-step "9 / 9 — Custom Configs"
-
-if command -v nvim &>/dev/null; then
-  log "Installing custom Neovim configs..."
-  install_config "configs/nvim-config" "$HOME/.config/nvim/lua/config"
-  log "Custom configs installed ✓"
-else
-  warn "neovim not found — skipping custom configs. Install nvim first."
-fi
+rm -rf "$CLONE_DIR" 2>/dev/null
 
 # =============================================================================
 # DONE

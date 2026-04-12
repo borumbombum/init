@@ -2,16 +2,21 @@
 
 Minimal environment bootstrap for a machine-agnostic developer. One curl command to feel at home anywhere.
 
+## Supported Systems
+
+- **omarchy** (Arch Linux)
+- **Debian/Ubuntu**
+
 ## What it does
 
-1. Installs **tmux** with a sane config
+1. Installs **tmux**
 2. Installs **Node.js** via nvm if not present
 3. Installs **opencode-telegram-bot**
 4. Installs **opencode**
-5. Installs **atuin** (shell history)
-6. Sets up portable **.zshrc** additions (aliases, history, NVM, RVM, bun, Atuin, Powerlevel10k)
-7. Installs **caffeinate** (macOS only)
-8. Creates a tmux session called `OpencodeBot` with three panes: telegram bot, opencode serve, and caffeinate
+5. Installs **fzf** (fuzzy finder for history)
+6. Sets up portable **.zshrc** additions (aliases, history, NVM, RVM, bun, fzf, Powerlevel10k)
+7. Installs custom Neovim configs
+8. Creates a tmux session called `OpencodeBot` with two panes: telegram bot and opencode serve
 
 ## Usage
 ```bash
