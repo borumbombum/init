@@ -26,11 +26,17 @@ detect_os() {
 
 install_pkg() {
   local pkg="$1"
+  local use_sudo=""
+  if command -v sudo &>/dev/null && [[ $EUID -ne 0 ]]; then
+    use_sudo="sudo"
+  fi
   log "Installing: $pkg"
   case "$OS" in
-    arch)   sudo pacman -S --noconfirm --needed "$pkg" ;;
-    debian) sudo apt-get install -y "$pkg" ;;
-    *)      err "Cannot install '$pkg' — unsupported OS: $OS" ;;
+    arch)   $use_sudo pacman -S --noconfirm --needed "$pkg" ;;
+    debian) $use_sudo apt-get install -y "$pkg" ;;
+    *)     err "Cannot install '$pkg' — unsupported OS: $OS" ;;
+  esac
+}
   esac
 }
 
