@@ -58,7 +58,11 @@ clone_configs() {
     [[ -e "$folder" ]] || continue
     local folder_name
     folder_name=$(basename "$folder")
-    local dest="${CONFIG_DESTINATIONS[$folder_name]}"
+    
+    # Skip zsh - handled separately in step 7
+    [[ "$folder_name" == "zsh" ]] && continue
+    
+    local dest="${CONFIG_DESTINATIONS[$folder_name]:-}"
     
     if [[ -z "$dest" ]]; then
       warn "No destination defined for $folder_name — skipping"
