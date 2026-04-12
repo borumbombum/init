@@ -40,6 +40,33 @@ install_pkg() {
   esac
 }
 
+install_config() {
+  local repo_path="$1"
+  local target_dir="$2"
+  local raw_url="https://raw.githubusercontent.com/borumbombum/init/main"
+
+  mkdir -p "$target_dir"
+
+  for file in autocmds options lazy keymaps; do
+    local src="${raw_url}/${repo_path}/${file}.lua"
+    local dest="${target_dir}/${file}.lua"
+    if curl -fsSL "$src" -o "$dest" 2>/dev/null; then
+      log "Installed ${file}.lua"
+    else
+      warn "Failed to install ${file}.lua"
+    fi
+  done
+}
+
+has_atuin() {
+  command -v atuin &>/dev/null && return 0
+  [[ -x "$HOME/.local/bin/atuin" ]] && return 0
+  [[ -x "$HOME/.cargo/bin/atuin" ]] && return 0
+  [[ -x "/usr/local/bin/atuin" ]] && return 0
+  [[ -x "/usr/bin/atuin" ]] && return 0
+  return 1
+}
+
 OS=$(detect_os)
 log "Detected OS: $OS"
 
@@ -75,8 +102,11 @@ else
   TMUX_CONF="$HOME/.tmux.conf"
 fi
 
-log "Writing tmux config -> $TMUX_CONF"
-cat > "$TMUX_CONF" << TMUXEOF
+if [[ -f "$TMUX_CONF" ]]; then
+  log "tmux config already exists, skipping"
+else
+  log "Writing tmux config -> $TMUX_CONF"
+  cat > "$TMUX_CONF" << TMUXEOF
 unbind r
 bind r source-file $TMUX_CONF
 set -g mouse on
@@ -88,8 +118,8 @@ set -g pane-border-style fg=white,bg=black
 set -g pane-active-border-style fg=green,bg=black
 set -g status-style bg=green,fg=black
 TMUXEOF
-
-log "tmux config written ✓"
+  log "tmux config written ✓"
+fi
 
 # =============================================================================
 # 2. NODE / NPM  (via nvm — avoids sudo, works on any distro)
@@ -140,7 +170,7 @@ fi
 # =============================================================================
 step "5 / 8 — atuin"
 
-if command -v atuin &>/dev/null; then
+if has_atuin; then
   log "atuin already installed ✓"
 else
   log "Installing atuin..."
@@ -153,9 +183,13 @@ fi
 # =============================================================================
 step "6 / 8 — zsh environment"
 
-log "Writing portable .zshrc additions to ~/.zshrc"
-cat >> "$HOME/.zshrc" << 'ZSHREOF'
+if grep -q "# >>> bootstrap.sh >>>" "$HOME/.zshrc" 2>/dev/null; then
+  log "zsh environment already configured ✓"
+else
+  log "Writing portable .zshrc additions to ~/.zshrc"
+  cat >> "$HOME/.zshrc" << 'ZSHREOF'
 
+# >>> bootstrap.sh >>>
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -197,9 +231,10 @@ if [[ -f "$HOME/.atuin/bin/env" ]]; then
   . "$HOME/.atuin/bin/env"
   eval "$(atuin init zsh)"
 fi
+# <<< bootstrap.sh <<<
 ZSHREOF
-
-log "zsh environment written ✓"
+  log "zsh environment written ✓"
+fi
 
 # =============================================================================
 # 7. CAFFEINATE  (macOS built-in — skip on Linux)
@@ -240,6 +275,19 @@ else
 
   tmux select-pane -t "$SESSION:$WIN.0"
   log "Session '$SESSION' created ✓"
+fi
+
+# =============================================================================
+# 9. CUSTOM CONFIGS
+# =============================================================================
+step "9 / 9 — Custom Configs"
+
+if command -v nvim &>/dev/null; then
+  log "Installing custom Neovim configs..."
+  install_config "configs/nvim-config" "$HOME/.config/nvim/lua/config"
+  log "Custom configs installed ✓"
+else
+  warn "neovim not found — skipping custom configs. Install nvim first."
 fi
 
 # =============================================================================
