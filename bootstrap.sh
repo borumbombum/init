@@ -107,8 +107,11 @@ else
   log "Installing Node via nvm..."
   curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  nvm install --lts
-  nvm use --lts
+  (
+    set +u
+    nvm install --lts
+    nvm use --lts
+  )
 fi
 
 command -v npm &>/dev/null || err "npm not found after Node install — something went wrong."
