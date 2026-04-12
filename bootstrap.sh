@@ -57,7 +57,7 @@ fi
 # =============================================================================
 # 1. TMUX
 # =============================================================================
-step "1 / 4 — tmux"
+step "1 / 8 — tmux"
 
 if command -v tmux &>/dev/null; then
   log "tmux already installed ($(tmux -V))"
@@ -94,7 +94,7 @@ log "tmux config written ✓"
 # =============================================================================
 # 2. NODE / NPM  (via nvm — avoids sudo, works on any distro)
 # =============================================================================
-step "2 / 4 — Node.js"
+step "2 / 8 — Node.js"
 
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 
@@ -112,7 +112,7 @@ fi
 command -v npm &>/dev/null || err "npm not found after Node install — something went wrong."
 
 # 3. OPENCODE TELEGRAM BOT
-step "3 / 5 — opencode-telegram-bot"
+step "3 / 8 — opencode-telegram-bot"
 
 if command -v opencode-telegram &>/dev/null; then
   log "opencode-telegram-bot already installed ✓"
@@ -125,7 +125,7 @@ fi
 # =============================================================================
 # 4. OPENCODE
 # =============================================================================
-step "4 / 5 — opencode"
+step "4 / 8 — opencode"
 
 if command -v opencode &>/dev/null; then
   log "opencode already installed ✓"
@@ -136,9 +136,75 @@ else
 fi
 
 # =============================================================================
-# 4. CAFFEINATE  (macOS built-in — skip on Linux)
+# 5. ATUIN
 # =============================================================================
-step "4 / 4 — caffeinate"
+step "5 / 8 — atuin"
+
+if command -v atuin &>/dev/null; then
+  log "atuin already installed ✓"
+else
+  log "Installing atuin..."
+  curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
+  log "atuin installed ✓"
+fi
+
+# =============================================================================
+# 6. ZDOTDIR / .zshrc SETUP
+# =============================================================================
+step "6 / 8 — zsh environment"
+
+log "Writing portable .zshrc additions to ~/.zshrc"
+cat >> "$HOME/.zshrc" << 'ZSHREOF'
+
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+alias ls='ls -ealth'
+alias ll='/bin/ls -lth'
+alias lse='/bin/ls -lht | sort -rs -t. -k2'
+
+HISTFILE=$HOME/.zhistory
+SAVEHIST=1000
+HISTSIZE=999
+setopt share_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_verify
+
+bindkey '^[[A' history-search-backward
+bindkey '^[[B' history-search-forward
+
+if [[ -f ~/.p10k.zsh ]]; then
+  source ~/.p10k.zsh
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+if [[ -d "$HOME/.rvm" ]]; then
+  export PATH="$PATH:$HOME/.rvm/bin"
+fi
+
+if [[ -d "$HOME/.bun" ]]; then
+  export BUN_INSTALL="$HOME/.bun"
+  export PATH="$BUN_INSTALL/bin:$PATH"
+  [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+fi
+
+if [[ -f "$HOME/.atuin/bin/env" ]]; then
+  . "$HOME/.atuin/bin/env"
+  eval "$(atuin init zsh)"
+fi
+ZSHREOF
+
+log "zsh environment written ✓"
+
+# =============================================================================
+# 7. CAFFEINATE  (macOS built-in — skip on Linux)
+# =============================================================================
+step "7 / 8 — caffeinate"
 
 if [[ "$OS" == "macos" ]]; then
   command -v caffeinate &>/dev/null && log "caffeinate available ✓" || warn "caffeinate not found."
@@ -149,7 +215,7 @@ fi
 # =============================================================================
 # 5. TMUX SESSION
 # =============================================================================
-step "5 / 5 — tmux session"
+step "8 / 8 — tmux session"
 
 SESSION="OpencodeBot"
 WIN="main"
