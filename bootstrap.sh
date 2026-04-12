@@ -46,7 +46,7 @@ declare -A CONFIG_DESTINATIONS=(
 clone_configs() {
   set +u
   CLONE_DIR=$(mktemp -d)
-  
+
   log "Cloning configs..."
   if ! git clone --depth 1 https://github.com/borumbombum/init.git "$CLONE_DIR" 2>/dev/null; then
     err "Failed to clone configs repo"
@@ -58,26 +58,31 @@ clone_configs() {
     [[ -e "$folder" ]] || continue
     local folder_name
     folder_name=$(basename "$folder")
-    
+
     # Skip zsh - handled separately in step 7
     [[ "$folder_name" == "zsh" ]] && continue
-    
+
     local dest="${CONFIG_DESTINATIONS[$folder_name]:-}"
-    
+
     if [[ -z "$dest" ]]; then
       warn "No destination defined for $folder_name — skipping"
       continue
     fi
-    
+
     if [[ -e "$dest" ]]; then
       warn "$dest already exists."
-      read -p "Overwrite? [y/N] " -n 1 -r reply; echo
+      if [ -t 0 ]; then
+        read -p "Overwrite? [y/N] " -n 1 -r reply < /dev/tty; echo
+      else
+        warn "Non-interactive run — skipping $folder_name"
+        continue
+      fi
       if [[ ! $reply =~ ^[Yy]$ ]]; then
         log "Skipped $folder_name"
         continue
       fi
     fi
-    
+
     mkdir -p "$dest"
     cp -r "$folder"/* "$dest/"
     log "Copied $folder_name -> $dest"
@@ -122,7 +127,9 @@ fi
 
 command -v npm &>/dev/null || err "npm not found after Node install — something went wrong."
 
+# =============================================================================
 # 3. OPENCODE TELEGRAM BOT
+# =============================================================================
 step "3 / 8 — opencode-telegram-bot"
 
 if opencode-telegram --version &>/dev/null 2>&1; then
@@ -176,9 +183,9 @@ elif grep -q 'source.*\.zshrc.d/custom.sh' "$HOME/.zshrc" 2>/dev/null; then
 else
   log "Setting up zsh environment..."
   mkdir -p "$HOME/.zshrc.d"
-  
+
   cp "$CLONE_DIR/configs/zsh/custom.sh" "$HOME/.zshrc.d/custom.sh"
-  
+
   echo '' >> "$HOME/.zshrc"
   echo '# bootstrap.sh customizations' >> "$HOME/.zshrc"
   echo '[[ -f ~/.zshrc.d/custom.sh ]] && source ~/.zshrc.d/custom.sh' >> "$HOME/.zshrc"
