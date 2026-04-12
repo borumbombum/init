@@ -37,8 +37,6 @@ install_pkg() {
     *)     err "Cannot install '$pkg' — unsupported OS: $OS" ;;
   esac
 }
-  esac
-}
 
 declare -A CONFIG_DESTINATIONS=(
   ["nvim-config"]="$HOME/.config/nvim/lua/config"
