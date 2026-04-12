@@ -14,14 +14,14 @@ step() { echo -e "\n${BLU}── $1${NC}"; }
 
 # ── OS Detection ──────────────────────────────────────────────────────────────
 detect_os() {
-  case "$OSTYPE" in
-    linux*)
-      if   [[ -f /etc/arch-release ]];   then echo "arch"
-      elif [[ -f /etc/debian_version ]]; then echo "debian"
-      else err "Unsupported OS. This script supports omarchy (Arch Linux) and Debian/Ubuntu only."
-      fi ;;
-    *) err "Unsupported OS: $OSTYPE — this script supports omarchy (Arch Linux) and Debian/Ubuntu only." ;;
-  esac
+  if [[ -f /etc/arch-release ]]; then
+    echo "arch"
+  elif [[ -f /etc/debian_version ]]; then
+    echo "debian"
+  else
+    echo "[error] Unsupported OS. This script supports omarchy (Arch Linux) and Debian/Ubuntu only."
+    exit 1
+  fi
 }
 
 install_pkg() {
