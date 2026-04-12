@@ -2,8 +2,8 @@
 #
 # ============================================================================
 # SCRIPT: backup.sh
-# VERSION: 1.0.0
-# DATE: 2026-04-04
+# VERSION: 1.1.0
+# DATE: 2026-04-12
 # AUTHOR: gemma4 AI model
 #
 # DESCRIPTION:
@@ -19,7 +19,7 @@
 #   Optional : rsync (highly recommended for reliable, delta-aware syncing)
 #
 # SECURITY & WARNINGS:
-#   • Encryption: AES-256-CBC with PBKDF2 key derivation (10,000 iterations)
+#   • Encryption: AES-256-GCM with PBKDF2 key derivation (100,000 iterations)
 #   • Passphrases are read securely from stdin (terminal echo disabled)
 #   • Unencrypted tarballs and staging directories are automatically purged
 #   • ⚠️  NEVER LOSE YOUR PASSPHRASE. Data recovery is mathematically impossible.
