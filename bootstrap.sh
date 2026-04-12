@@ -19,7 +19,7 @@ detect_os() {
   elif [[ -f /etc/debian_version ]]; then
     echo "debian"
   else
-    echo "[error] Unsupported OS. This script supports omarchy (Arch Linux) and Debian/Ubuntu only."
+    echo "Unsupported OS. This script supports omarchy (Arch Linux) and Debian/Ubuntu only." >&2
     exit 1
   fi
 }
