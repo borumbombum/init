@@ -18,9 +18,9 @@ detect_os() {
     linux*)
       if   [[ -f /etc/arch-release ]];   then echo "arch"
       elif [[ -f /etc/debian_version ]]; then echo "debian"
-      else                                    err "Unsupported Linux distro. This script supports omarchy (Arch) and Debian/Ubuntu only."
+      else err "Unsupported OS. This script supports omarchy (Arch Linux) and Debian/Ubuntu only."
       fi ;;
-    *) err "Unsupported OS: $OSTYPE — this script supports omarchy (Arch) and Debian/Ubuntu only." ;;
+    *) err "Unsupported OS: $OSTYPE — this script supports omarchy (Arch Linux) and Debian/Ubuntu only." ;;
   esac
 }
 
