@@ -42,7 +42,7 @@ Example:
 ./backup.sh /Volumes/Pendrive/Data /home/user/Backups
 ```
 
-The script syncs files from the source, compresses them into a tarball, encrypts it with AES-256-GCM (PBKDF2, 100k iterations), and automatically cleans up temporary files.
+The script syncs files from the source, compresses them into a tarball, encrypts it with AES-256-CBC (PBKDF2, 100k iterations), and automatically cleans up temporary files.
 
 ## Philosophy
 
