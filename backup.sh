@@ -62,6 +62,21 @@ fi
 SOURCE_DIR="$1"
 DEST_PARENT_DIR="$2"
 
+# --- 1b: Passphrase (early to fail fast before long copy/compression) ---
+echo ""
+echo "🔑 Enter your encryption passphrase early to avoid wasting time on copy/compression."
+echo ""
+read -s -p "🔑 Encryption passphrase (MUST BE REMEMBERED): " USER_PASSWORD
+echo ""
+read -s -p "🔑 Confirm passphrase: " CONFIRM_PASSWORD
+echo ""
+
+if [ "$USER_PASSWORD" != "$CONFIRM_PASSWORD" ]; then
+    echo ""
+    echo "🔴 ERROR: Passphrases do not match. Cancelled before any work was done."
+    exit 1
+fi
+
 # --- 2. Timestamp Generation ---
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
@@ -144,18 +159,6 @@ echo "✅ Compression complete. Archive saved to $UNENCRYPTED_ARCHIVE_PATH."
 echo ""
 echo "**************======================================="
 echo "🔒 Step 3/4: Encrypting archive..."
-
-read -s -p "🔑 Enter the encryption passphrase (MUST BE REMEMBERED): " USER_PASSWORD
-echo ""
-read -s -p "🔑 Confirm the passphrase: " CONFIRM_PASSWORD
-echo ""
-
-if [ "$USER_PASSWORD" != "$CONFIRM_PASSWORD" ]; then
-    echo "🔴 ERROR: Passphrases do not match. Encryption cancelled."
-    # Clean up the unencrypted file if encryption fails
-    rm -f "$UNENCRYPTED_ARCHIVE_PATH" 
-    exit 1
-fi
 
 # Encrypt the tarball to the final destination path
 openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
