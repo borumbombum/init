@@ -158,7 +158,7 @@ if [ "$USER_PASSWORD" != "$CONFIRM_PASSWORD" ]; then
 fi
 
 # Encrypt the tarball to the final destination path
-openssl enc -aes-256-cbc -salt -pbkdf2 -iter 10000 \
+openssl enc -aes-256-gcm -salt -pbkdf2 -iter 100000 \
   -in "$UNENCRYPTED_ARCHIVE_PATH" \
   -out "$ENCRYPTED_PATH" \
   -pass pass:"$USER_PASSWORD"
