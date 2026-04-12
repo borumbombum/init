@@ -44,6 +44,7 @@ declare -A CONFIG_DESTINATIONS=(
 )
 
 clone_configs() {
+  set +u
   CLONE_DIR=$(mktemp -d)
   
   log "Cloning configs..."
@@ -77,6 +78,7 @@ clone_configs() {
     cp -r "$folder"/* "$dest/"
     log "Copied $folder_name -> $dest"
   done
+  set -u
 }
 
 OS=$(detect_os)
