@@ -121,7 +121,7 @@ command -v npm &>/dev/null || err "npm not found after Node install — somethin
 # 3. OPENCODE TELEGRAM BOT
 step "3 / 8 — opencode-telegram-bot"
 
-if command -v opencode-telegram &>/dev/null; then
+if command -v opencode-telegram &>/dev/null || [[ -x "$HOME/.local/bin/opencode-telegram" ]]; then
   log "opencode-telegram-bot already installed ✓"
 else
   log "Installing opencode-telegram-bot globally..."
@@ -134,7 +134,7 @@ fi
 # =============================================================================
 step "4 / 8 — opencode"
 
-if command -v opencode &>/dev/null; then
+if command -v opencode &>/dev/null || [[ -x "$HOME/.local/bin/opencode" ]] || [[ -x "$HOME/.cargo/bin/opencode" ]]; then
   log "opencode already installed ✓"
 else
   log "Installing opencode..."
